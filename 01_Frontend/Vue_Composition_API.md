@@ -1,4 +1,4 @@
-# [1주차 월요일] Vue Composition API
+# Vue Composition API
 > `setup()`, `ref()`, `reactive()` 기본 패턴 이해
 
 ------
