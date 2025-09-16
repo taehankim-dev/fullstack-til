@@ -191,13 +191,148 @@ public class UserController {
 
 ## 4. 트랜잭션
 
+### `@Transactional`
+- 의미: 메서드/클래스 단위 트랜잭션 경계
+- 팁: 기본 `RuntimeException` 발생 시 롤백. 체크 예외 롤백은 `rollbackFor`.
+```java
+@Service
+@RequiredArgsConstructor
+public class WalletService {
+    private final WallerRepository repo;
+
+    @Transactional
+    public void charge(Long userId, long amount) {
+        var wallet = repo.findByUserId(userId).orElseThrow(NotFoundException::new);
+        wallet.charge(amount);
+    }
+}
+```
+
 ---
 
 ## 5. JPA & 데이터 접근
 
+### `@Entity`, `@Table`, `@Id`, `@GeneratedValue`
+- `@Entity`: DB 테이블과 매핑되는 JPA 엔티티다 라는 표시.
+- `@Table`: 엔티티가 어떤 DB 테이블과 매핑될지 지정.
+- `@Id`: 엔티티의 **기본 키(Primary Key)** 지정. 반드시 하나 이상 필요.
+- `@GeneratedValue`: 기본 키 값을 자동 생성할 때 사용.
+    > 전략 옵션
+    > - `GenerationType.IDENTITY` -> DB의 auto_increment 사용
+    > - `GenerationType.SEQUENCE` -> DB 시퀀스 사용
+    > - `GenerationType.TABLE` -> 별도 키 생성용 테이블 사용
+    > - `GenerationType.AUTO` -> DB 방언에 맞춰 자동 선택
+```java
+@Entity
+@Table(name = "users")
+@Getter @Setter
+public class User {
+  @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(nullable = false, unique = true)
+  private String email;
+
+  private String password;
+}
+```
+
+### 관계 매핑 : `@OneToMany`, `@ManyToOne`, `@OneToOne`, `@ManyToMany`, `@JoinColumn`
+```java
+@Entity
+public class Order {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+}
+```
+
+#### ※ `fetch` 는 로딩 전략임!
+1) 즉시 로딩 (EAGER)
+- 관계된 엔티티를 **즉시 함께 조회**
+- `@ManyToOne(fetch = FetchType.EAGER)`
+- 예시
+```sql
+select u.*, t.*
+from user u
+join team t on u.team_id = t.id
+```
+- 장점: 코드에서 바로 `user.getTeam()` 해도 이미 데이터가 있음.
+- 단점: 불필요하게 JOIN을 많이 날려서 성능 문제가 생길 수 있음.
+
+2) 지연 로딩 (LAZY)
+- 관계된 엔티티를 **실제로 접근할 때 조회**
+- `@ManyToOne(fetch = FetchType.LAZY)`
+- 처음에는 프록시 객체(가짜)만 넣어둠.
+- `user.getTeam().getName()` 같이 team 데이터를 시제로 사용하려고 하면 그때 SELECT 쿼리 실행.
+```java
+User user = userRepository.findById(1L).get(); // team은 아직 안 불러옴.
+Team team = user.getTeam();                    // 프록시 객체
+String name = team.getName();                  // 여기서 DB 조회 발생
+```
+
+### 스프링 데이터: `@EnableJpaRepositories`, `JpaRepository`
+```java
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
+}
+```
+
 ---
 
 ## 6. 설정/구성
+
+### `@Configuration`, `@Bean`
+- `@Configuration`: **설정 클래스임을 표시**. 이 클래스 안에서 **스프링 빈**을 등록할 수 있음.
+- `@Bean`: **메서드 레벨**에서 사용. 해당 메서드의 리턴 객체르르 **스프링 컨테이너가 관리하는 빈(bean)**으로 등록.
+```java
+@Configuration
+public class AppConfig {
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+}
+```
+
+### `@ConfigurationProperties` (+ `@EnableConfigurationProperties`)
+- 의미: yml/properties를 타입 세이프하게 바인딩.
+- `@ConfigurationProperties`: 
+    - 외부 설정 파일(`application.yml`, `application.properties`)에 정의된 값을 **자바 객체 필드로 자동 매핑**해줌.
+    - 보통 `prefix` 속성을 붙여서 특정 그룹만 매핑.
+- `@EnableConfigurationProperties`:
+    - `@ConfigurationProperties` 클래스가 실제로 스프링 빈으로 등록되도록 활성화하는 어노테이션.
+    - 보통 `@SpringBootApplication` 이나 `@Configuration` 클래스에 붙임.
+
+```java
+@ConfigurationProperties(prefix = "sms")
+@Getter @Setter
+public class SmsProps {
+    private String sender;
+    private String apiKey;
+}
+
+@Configuration
+@EnableConfigurationProperties(SmsProps.class)
+class PropsConfig { }
+```
+
+### `@Value`
+- **단일 설정 값**을 주입할 때 사용.
+- `${...}` 안에 `application.yml` / `application.properties` 키를 넣어 쓰는 방식.
+```java
+@Value("${jwt.secret}")
+private String jwtSecret;
+```
+
+### 프로파일: `@Profile("dev")`
+- 특정 환경(Profile)에서만 해당 빈을 등록하도록 제한하는 어노테이션.
+- `spring.profiles.active` 값과 매칭되어야 동작.
+```java
+@Profile("dev")
+@Configuration
+class DevOnlyConfig {...}
+```
 
 ---
 
