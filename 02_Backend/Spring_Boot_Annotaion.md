@@ -337,14 +337,200 @@ class DevOnlyConfig {...}
 ---
 
 ## 7. 스케줄링/비동기/캐시
+### `@EnableScheduling`, `@Scheduled`
+- `@EnableScheduling`
+    - **스케줄링 기능을 켜주는 스위치**
+- `@Scheduled`
+    - **스케줄링할 메서드**에 붙이는 어노테이션.
+- [Spring Batch vs @Scheduled](./Spring_Boot_Batch_verse_Scheduled.md)
+
+```java
+@EnableScheduling
+@SpringBootApplication
+public class App { }
+
+@Component
+class Housekeeping {
+    @Scheduled(cron = "0 0 * * * *") // 매 정시
+    public void clean() { ... }
+}
+```
+
+* `@Scheduled` 사용 방법
+```java
+// 1) 고정 주기 실행
+@Scheduled(fixedRate = 5000) // 5초마다 실행
+public void job1() {
+    System.out println("5초마다 실행")
+}
+
+// ---
+
+// 2) 고정 딜레이 실행
+@Scheduled(fixedDelay = 3000) // 3초 쉬고 다시 실행
+public void job2() {
+    System.out.println("이전 실행 끝난 뒤 3초 후 실행")
+}
+
+// ---
+
+// 3) 크론 표현식
+@Scheduled(cron = "0 0 9 * * *") // 매일 오전 9시에 실행
+public void job3() {
+    System.out.println("매일 아침 9시에 실행!")
+}
+```
+
+### `@EnableAsync`, `@Async`
+- `@EnableAsync`
+    - 프로젝트에서 **비동기 기능을 켜는 스위치**
+- `@Async`
+    - **해당 메서드를 별도 스레드에서 실행**하게 해줌 (호출 즉시 리턴, 백그라운드에서 실행)
+```java
+@EnableAsync
+@Configuration
+class AsyncConfig { }
+
+@Service
+class MailService {
+    @Async
+    public void sendAsync(Mail mail) { ... }
+}
+```
+
+### `@EnableCaching`, `@Cacheable`, `@CacheEvict`
+- `@EnableCaching`
+    - **스프링에서 캐싱 기능을 활성화**하는 스위치.
+    - 보통 `@SpringBootApplication` 클래스나 `@Configuration` 클래스에 붙임.
+- `@Cacheable`
+    - **메서드 실행 결과를 캐시에 저장**하고, 같은 파라미터로 다시 호출되면 DB/로직 실행없이 캐시 값 반환.
+- `@CacheEvict`
+    - **캐시를 지울 때 사용. (데이터 변경 시 캐시 무효화)
+
+```java
+@EnableCaching
+@Configuration
+class CacheConfig { }
+
+@Service
+class ProductService {
+    @Cacheable(cacheNames = "product", key = "#id") // product 캐시에 id를 key값으로 캐시 저장.
+    public Product get(Long id) { ... }
+
+    @CacheEvict(cacheNames = "product", key = "#id") // product의 key 값에 해당하는 캐시 삭제.
+    public void invalidate(Long id) { ... }
+    // allEntries = true -> 캐시 전체 삭제.
+}
+```
 
 ---
 
 ## 8. 시큐리티(Security)
 
+### `@EnableWebSecurity`, `@Configuration`, `SecurityFilterChain`
+- `@EnableWebSecurity`
+    - **스프링 시큐리티를 활성화**하는 스위치
+    - Web 보안 설정(인증/인가)을 켜고, 정의한 보안 설정을 적용 가능하게 해줌.
+- `@Configuration`
+    - 이 클래스가 **설정 클래스**임을 의미.
+    - 스프링이 이 클래스 안의 `@Bean` 메서드들을 읽어 빈으로 등록.
+    - 보안 설정 클래스에도 붙여야 시큐리티 관련 Bean 등록 가능.
+- `SecurityFilterChain`
+    - **Spring Security의 필터 체인(보안 규칙 모음)을 정의하는 Bean.**
+    - `@Bean`으로 등록해야 하고, 여기서 **URL 별 접근 권한, 로그인 방식** 등을 설정.
+
+```java
+@EnableWebSecurity
+@Configuration
+public class SecurityConfig {
+    @Bean
+    SecurityFilterChain filter(HttpSecurity http) throws Exception {
+        return http
+        .csrf(csrf -> csrf.disable())
+        .authorizeHttpRequests(auth -> auth.requestMatchers("/public/**").permitAll()
+                                            .anyRequest().authenticated()
+        )
+        .httpBasic(basic -> {})
+        .build()
+    }
+}
+```
+
+### 메서드 보안: `@EnableMethodSecurity`, `@PreAuthorize`, `@PostAuthorize`
+- `@EnableMethodSecurity`
+    - **메서드 단위에서 권한 검사 기능을 켜주는 스위치**
+    - 컨트롤러, 서비스 계층 메서드 위에 `@PreAuthorize`, `@PostAuthorize` 등을 쓸 수 있게 해줌.
+    - 보안 설정 클래스에 붙임.
+- `@PreAuthorize`
+    - **메서드 실행 전에 권한/조건을 검사**하는 어노테이션.
+    - SpEL(스프링 표현식 언어)로 조건을 작성.
+- `@PostAuthorize`
+    - **메서드 실행이 끝난 후(결과 반환 직전) 권한을 검사**하는 어노테이션.
+    - 즉, **실행은 일단 시키고**, 반환값을 검사해서 조건에 맞지 않으면 `AccessDeniedException`을 던짐.
+
+```java
+@EnableMethodSecurity
+@Configuration
+class MethodSecurityConfig { }
+
+@PreAuthorize("hasRole('ADMIN')")
+public void deleteUser(Long id) { ... }
+
+@PostAuthorize("returnObject.username == authentication.name")
+public User getUser(Long id) {
+    // DB에서 유저 찾기 (실행은 됨)
+    return userRepository.findById(id).orElseThrow();
+
+    // 로그인한 사용자가 본인 데이터일 때만 결과 반환.
+    // 다른 사람 데이터면 이미 조회는 됐지만, 반환 전에 Security가 막아서 `403 Forbidden` 발생.
+}
+```
+
+
 ---
 
-## 9. 직렬화 / Jackson
+## 9. 직렬화 / Jackson(ObjectMapper)
+> 직렬화(Serialization) : 자바 객체 -> JSON 문자열
+```java
+User user = new User("taehan", "1234");
+String json = objectMapper.writeValueAsString(user);
+// 결과: {"username":"taehan","password":"1234"}
+```
+> 역직렬화(Deserialization) : JSON 문자열 -> 자바 객체
+```java
+String json = "{\"username\":\"taehan\",\"password\":\"1234\"}";
+User user = objectMapper.readValue(json, User.class);
+```
+> Jackson?
+> - 스프링 부트에서 **기본 JSON 변환기로 Jackson(ObjectMapper)**를 사용하기 때문
+
+### `@JsonProperty`, `@JsonIgnore`, `@JsonInclude`
+- `@JsonProperty`
+    - JSON 필드 이름과 **자바 필드/메서드 이름을 매핑**할 때 사용.
+    - 자바 변수명과 JSON 키가 다를 때 유용.
+- `@JsonIgnore`
+    - 특정 필드를 **JSON 변환에서 무시**
+    - 민감정보(비밀번호, 토큰 등) 숨길 때 자주 사용.
+- `@JsonInclude`
+    - 특정 조건에 맞을 때만 필드를 JSON에 포함.
+    - 옵션 예시:
+        - `Include.NON_NULL`: null 값은 제외
+        - `Include.NON_EMPTY`: null, 빈 문자열, 빈 리스트 다 제외
+        - `Include.ALWAYS`: 항상 포함
+
+```java
+public record UserRes(
+    @JsonProperty("user_id") Long id, // JSON : { "user_id" : 1 } , JAVA : userid = 1
+    String email,
+    @JsonIgnore String password // JSON에 password 있어도 무시.
+) {}
+
+@JSONInclude(JsonInclude.Include.NON_NULL)
+public class User {
+    private String username;
+    private String nickname; // null이면 JSON에 안 나옴.
+}
+```
 
 ---
 
