@@ -536,14 +536,47 @@ public class User {
 
 ## 10. 테스트 (Test)
 
+### `@SpringBootTest`, `@WebMvcTest`, `@DataJpaTest`
+- `@SpringBootTest`
+    - **Spring Boot Application 전체를 통합 테스트**할 때 사용.
+- `@WebMvcTest`
+    - **웹 레이어(Controller + MVC 관련 Bean)만 테스트**할 때 사용.
+    - `@Service`, `@Repository` 같은 빈은 안 뜸 -> 그래서 가볍고 빠름.
+    - 보통 `MockMvc`와 같이 씀.
+- `@DataJpaTest`
+    - **JPA 관련 컴포넌트(Entity, Repository)만 테스트**할 때 사용.
+    - 데이터 계층만 로드(Controller, Service 안 뜸)
+    - 기본적으로 H2 같은 **임베디드 DB** 사용 (설정에 따라 실제 DB도 가능)
+```java
+@SpringBootTest
+class AppIntegrationTest { ... }
+
+@WebMvcTest(UserController.class)
+class UserControllerTest { ... }
+
+@DataJpaTest
+class UserRepositoryTest { ... }
+```
+
+### `@MockBean`
+- **테스트용으로 스프링 빈을 가짜(mock) 객체로 교체**할 때 씀.
+```java
+@WebMvcTest
+class SomeTest {
+    @MockBean
+    private ExternalClient client;
+}
+```
+
 ---
 
 ## 11. 로깅(Logging)/Lombok
-
---- 
-
-## 12. 문서화(OpenAPI/Swagger)
-
----
-
-## 부록: 메타 annotation
+> 주요 Lombok : `@Getter`, `@Setter`, `@Builder`, `@RequiredArgsConstructor`, `@Slf4j`
+```java
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class PayService {
+    public void pay() { log.info("pay called"); }
+}
+```
