@@ -146,4 +146,4 @@ function add() {
 3. `getters`와 `computed()` 는 어떤 관계가 있을까?
 - `getters`는 내부적으로 `computed()`로 동작해서 반응형이다. 파생 데이터 만들 때 유용.
 
-- [Pinia 고급 패턴](./Vue_Pinia-detail.md)
+- [Pinia 고급 패턴](./Pinia-detail.md)

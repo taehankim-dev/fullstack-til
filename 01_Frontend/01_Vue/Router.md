@@ -116,4 +116,4 @@ function login() {
 
 3. 라우터 가드에서 로그인 여부를 판단하는 대표적인 3가지 방법은?
 - ① `localStorage` 토큰 여부, ② Vuex/Pinia 상태, ③ 서버 세션 API 확인.
-- [자세한 내용](./Vue_Router-detail.md)
+- [자세한 내용](./Router-detail.md)
