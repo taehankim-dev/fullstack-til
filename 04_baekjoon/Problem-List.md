@@ -25,3 +25,5 @@
 | 10809 | 알파벳 찾기 | 구현 + 문자열 | String | 브론즈 2 | 완료 |
 | 3273 | 두 수의 합 | 정렬 + 투 포인터 | Sort, Two Pointer | 실버 3 | 완료 |
 | 1940 | 주몽 | 정렬 + 투 포인터 | Sort, Two Pointer | 실버 4 | 완료 |
+| 1806 | 부분합 | 투 포인터 + 누적합 | Two Pointer + Prefix Sum | 골드 4 | 완료 | 
+| 1260 | DFS와 BFS | DFS, BFS | DFS, BFS | 실버 2 | 완료 |
