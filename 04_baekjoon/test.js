@@ -1,63 +1,23 @@
-// const fs = require("fs").readFileSync(0, 'utf-8').trim();
+// const fs = require('fs').readFileSync(0, 'uft-8')
+const fs = `2
+10 8 17
+0 0
+1 0
+1 1
+4 2
+4 3
+4 5
+2 4
+3 4
+7 4
+8 4
+9 4
+7 5
+8 5
+9 5
+7 6
+8 6
+9 6
+10 10 1
+5 5`
 
-const fs = `7
-0110100
-0110101
-1110101
-0000111
-0100000
-0111110
-0111000`
-
-const inputs = fs.split('\n');
-const N = Number(inputs.splice(0,1));
-
-const graph = [];
-for(let i = 0; i < N; i++) {
-    const lines = inputs[i].split('').map(Number);
-    graph.push(lines)
-}
-
-function bfs(startX, startY) {
-    const queue = [];
-    let cnt = 1;
-    
-    visited[startX][startY] = true;
-    queue.push([startX, startY]);
-
-    const dx = [0,0,-1,1];
-    const dy = [-1,1,0,0];
-
-    while(queue.length) {
-        const [x, y] = queue.shift();
-        for(let i = 0; i < 4; i++){
-            const nx = dx[i] + x;
-            const ny = dy[i] + y;
-
-            if(nx >= 0 && nx < N && ny >= 0 && ny < N) {
-                if(!visited[nx][ny] && graph[nx][ny] === 1) {
-                    visited[nx][ny] = true;
-                    cnt++;
-                    queue.push([nx, ny])
-                }
-            }
-        }
-    }
-
-    return cnt;
-}
-
-const visited = Array.from({length: N}, () => new Array(N).fill(false))
-const counts = [];
-
-for(let i = 0; i < N; i++){
-    for(let j = 0; j < N; j++){
-        if(graph[i][j] === 1 && !visited[i][j]) {
-            counts.push(bfs(i, j))
-        }
-    }
-}
-
-console.log(counts.length);
-const result = counts.sort((a,b) => a-b)
-console.log(result.join('\n'))
