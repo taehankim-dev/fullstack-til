@@ -29,4 +29,6 @@
 | 1260 | DFS와 BFS | DFS, BFS | DFS, BFS | 실버 2 | 완료 |
 | 2675 | 문자열 반복 | 구현 + 문자열 | String | 브론즈 2 | 완료 |
 | 2531 | 회전 초밥 | 슬라이딩 윈도우 | Sliding Window | 실버 1 | 완료 |
-| 1012 | 유기농 배추 | DFS & BFS | DFS, BFS | 실버 2 |  |
+| 1012 | 유기농 배추 | DFS & BFS | DFS, BFS | 실버 2 | 완료 |
+| 10845 | 큐 | Queue | Queue | 실버 4 | 완료 |
+| 10025 | 게으른 백곰 | 슬라이딩 윈도우 | Sliding Window | |
