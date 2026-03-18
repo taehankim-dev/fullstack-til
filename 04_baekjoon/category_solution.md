@@ -155,3 +155,129 @@ while(left < right) {
 - [] 합 비교로 포인터를 한쪽씩 움직일 수 있을 것 같다.
 
 위에 "예"가 많으면 양 끝 투 포인터!!
+
+---
+
+## 3. DFS와 BFS
+
+> 핵심 키워드
+> - "탐색" 문제
+> - 연결 관계
+> - 방문 처리(visited)가 반드시 필요
+> - DFS나 BFS냐에 따라 **탐색 순서의 의미가 달리짐**
+
+### 1) DFS (Depth-First Search, 깊이 우선 탐색)
+
+#### 언제 쓰는 것인가!
+- 한 경로를 **끝까지 깊게** 들어가 봐야할 때
+- 모든 경우의 수를 탐색해야 할 때
+- "갈 수 있는지 없는지", "연결되어 있는지" 판단
+- 조합 / 백트리킹 / 재귀 구조가 자연스러울 때
+
+#### 대표 문제 유형
+- 연결 요소 개수
+- 경로 존재 여부
+- 모든 경우의 수 탐색
+- 백트래킹 문제
+- 트리 순회
+
+예
+- 백준 1260, 11724, 2667, 15649
+
+#### 핵심 개념!
+- **한 방향으로 갈 수 있을 때까지 간다!**
+- 더 이상 못 가면 *되돌아온다**
+- 스택 구조 (재귀 = 암묵적 스택)
+
+#### DFS 기본 패턴 - 재귀
+```js
+function dfs(node) {
+    visited[node] = true;
+
+    for(const next of graph[node]) {
+        if(!visited[next]) {
+            dfs(next);
+        }
+    }
+}
+```
+
+특징
+- 구현 직관적
+- 코드 짧음
+- 재귀 깊이가 깊어지면 스택 오버플로우 위험
+
+
+#### DFS 기본 패턴 - stack
+```js
+const stack = [start];
+visited[start] = true;
+
+while(stack.length > 0) {
+    const cur = stack.pop();
+
+    for(const next of graph[cur]) {
+        if(!visited[next]) {
+            visited[next] = true;
+            stack.push(next);
+        }
+    }
+}
+```
+
+언제 재귀 대신 스택을 쓰는가!
+- 노드 수가 많아 재귀 깊이가 위험할 때
+- JS 환경에서 콜스택 제한이 걱정될 때
+
+
+---
+
+### 2) BFS (Breadth-First Search, 너비 우선 탐색)
+
+#### 언제 쓰는 것인가!
+- **최단 거리 / 최소 횟수**를 구할 때
+- 단계(Level) 개념이 있을 때
+- "몇 번 만에 도달하는가?"
+- 먼저 도착한 것이 의미가 있을 때
+
+#### 대표 유형 문제
+- 최단 경로
+- 미로 탐색
+- 숨바꼭질
+- 거리 계산 문제
+
+예:
+- 백준 2178, 1697, 7576, 7569
+
+#### BFS의 핵심 개념
+- **가까운 것부터 차례대로 탐색**
+- 큐(Queue) 구조
+- 처음 방문했을 때가 최단 거리
+
+#### BFS 기본 패턴
+```js
+const queue = [];
+queue.push(start);
+visited[start] = true;
+dist[start] = 0;
+
+while(queue.length > 0) {
+    const cur = queue.shift();
+
+    for(const next of graph[cur]) {
+        if(!visited[next]) {
+            visited[next] = true;
+            dist[next] = dist[cur] + 1;
+            queue.push(next);
+        }
+    }
+}
+```
+
+특징
+- visited 체크를 **큐에 넣을 때**한다.
+- dist 배열로 거리 관리 가능
+- JS에서는 `shift()` 때문에 큐 구현 주의 필요
+
+---
+
