@@ -46,4 +46,4 @@ describe("mergeSort", () => {
 
 ## 참고: 설정 파일
 - `tsconfig.json`의 `include`가 `03_CS_And_Algorithm/**/**/*.ts`로 되어 있어서, 주제 폴더가 몇 단계로 깊어져도(`Algorithm/merge_sort/merge-sort.ts` 등) 전부 타입 체크 대상에 포함됨.
-- 별도의 `vitest.config.ts`는 없음 — Vitest는 기본적으로 프로젝트 전체에서 `*.test.ts` 패턴을 재귀적으로 찾기 때문에, 폴더가 깊어져도 설정 추가 없이 테스트가 자동으로 발견됨.
+- `vitest.config.ts`에서 `test.pool`을 `vmThreads`로 고정해둠. Vitest 기본 풀(`threads`)은 실제 OS 워커 스레드를 띄우는데, 샌드박스/제한된 실행 환경(예: 에이전트가 명령을 실행하는 격리된 쉘)에서는 스레드 생성이 막혀서 `describe(...)` 호출 시 `Cannot read properties of undefined (reading 'config')` 에러가 남. `vmThreads`는 실제 스레드 대신 같은 프로세스 안의 VM 컨텍스트에서 테스트를 돌려서 이 문제를 피함. (만약 같은 에러를 다시 보게 되면, 먼저 `node_modules` 재설치보다 이 pool 설정을 의심해볼 것.)
